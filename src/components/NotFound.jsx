@@ -1,15 +1,14 @@
-
-import React from "react";
-import Header from "./Header";
+import React from 'react';
+import Header from './Header';
 
 class NotFound extends React.Component {
     componentDidMount() {
-        document.title = "4o4 Not found";
+        document.title = "404 Error Page"
     }
     render() {
-        return (
+        return(
             <div className="container">
-                <Header tagline="404 - sorry! not found" />
+                <Header tagline="404 - Sorry! Page not found" />
                 <div className="alert alert-danger">
                     <p><strong>Please navigate to another page</strong></p>
                 </div>
