@@ -1,48 +1,100 @@
 import React from 'react';
 import Header from './Header';
-import TodoList from './TodoList';
-import TodoForm from './TodoForm';
+import ToDoList from './ToDoList';
+import ToDoForm from './ToDoForm';
+import ToDoFilter from './ToDoFilter';
+import uuid from 'uuid';
 import base from '../base';
+import firebase from 'firebase';
+
 class App extends React.Component {
 	constructor(props) {
 		super(props);
 
 		this.state = {
-			items: []
+			toDoItems : {},
+			filter    : 'undone'
 		};
 	}
 
-	addItem = (item) => {
-		// copy the state item
-		const items = { ...this.state.items };
-		// create new item to existing items
-		items[`item${Date.now()}`] = item;
-		// update state of items
-		this.setState({ items: items });
+	addToDo = (text) => {
+		const todo = {
+			uuid : uuid(),
+			text : text,
+			done : false
+		};
+		this.setState((state) => {
+			state.toDoItems[todo.uuid] = todo;
+			return state;
+		});
 	};
 
-	removeItem = (index) => {
-		console.log('removing item ' + index);
-		delete this.state.items[index];
-		this.setState({ items: this.state.items });
-	};
 	componentWillMount() {
-		this.ref = base.syncState(`${this.props.params}/items`, {
-			context: this,
-			state: 'items'
+		this.toDoItemRef = base.syncState('todo-list-items', {
+			context : this,
+			state   : 'toDoItems'
 		});
 	}
+
+	componentWillUnmount() {
+		base.removeBinding(this.toDoItemRef);
+	}
+
+	updateToDoText = (id, newText) => {
+		this.setState((state) => {
+			state.toDoItems[id].text = newText;
+			return state;
+		});
+	};
+
+	removeItem = (id) => {
+		this.setState((state) => {
+			delete state.toDoItems[id];
+			return state;
+		});
+		firebase.database().ref(`todo-list-items/${id}`).remove();
+	};
+	toggleToDoItem = (uuid, event) => {
+		const checkbox = event.target;
+		this.setState((state) => {
+			state.toDoItems[uuid].done = checkbox.checked;
+			return state;
+		});
+	};
+
+	componentDidMount() {
+		this.toDoItemRef = base.syncState('todo-list', {
+			context : this,
+			state   : 'toDoItems'
+		});
+	}
+	componentWillUnmount() {
+		base.removeBinding(this.toDoItemRef);
+	}
+
+	setFilter = (filter) => {
+		this.setState((state) => {
+			state.filter = filter;
+			return state;
+		});
+	};
 
 	render() {
 		return (
 			<div className="container">
 				<Header tagline="These are my bucket list items" />
-				<TodoForm addItem={this.addItem} />
-				<div className="todo-list">
-					<TodoList items={this.state.items} removeItem={this.removeItem} />
-				</div>
+				<ToDoForm addToDo={this.addToDo} />
+				<ToDoFilter setFilter={this.setFilter} activeFilter={this.state.filter} />
+				<ToDoList
+					toDoItems={this.state.toDoItems}
+					filter={this.state.filter}
+					updateToDoText={this.updateToDoText}
+					removeItem={this.removeItem}
+					toggleToDoItem={this.toggleToDoItem}
+				/>
 			</div>
 		);
 	}
 }
+
 export default App;
