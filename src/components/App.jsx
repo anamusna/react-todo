@@ -36,10 +36,6 @@ class App extends React.Component {
 		});
 	}
 
-	componentWillUnmount() {
-		base.removeBinding(this.toDoItemRef);
-	}
-
 	updateToDoText = (id, newText) => {
 		this.setState((state) => {
 			state.toDoItems[id].text = newText;
